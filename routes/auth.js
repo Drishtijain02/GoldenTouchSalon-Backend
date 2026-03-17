@@ -1,35 +1,49 @@
 const router = require('express').Router();
-const path = require('path');
-const User = require(path.join(__dirname, '../models/User'));
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const SECRET = "allure_secret_key";
-
-// REGISTER (run once)
+// REGISTER
 router.post('/register', async (req, res) => {
-  const { phone, password } = req.body;
+  try {
+    const { phone, password } = req.body;
 
-  const hashed = await bcrypt.hash(password, 10);
+    if (!phone || !password) {
+      return res.status(400).json({ error: 'Phone and password required' });
+    }
 
-  const user = new User({ phone, password: hashed });
-  await user.save();
+    const exists = await User.findOne({ phone });
+    if (exists) {
+      return res.json({ message: 'User already exists' });
+    }
 
-  res.json({ message: "User created" });
+    const user = new User({ phone, password });
+    await user.save();
+
+    res.json({ message: 'User created' });
+
+  } catch (err) {
+    console.error("REGISTER ERROR:", err); // 🔥 IMPORTANT
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // LOGIN
 router.post('/login', async (req, res) => {
-  const { phone, password } = req.body;
+  try {
+    const { phone, password } = req.body;
 
-  const user = await User.findOne({ phone });
-  if (!user) return res.status(400).json({ error: "User not found" });
+    const user = await User.findOne({ phone });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(400).json({ error: "Wrong password" });
+    if (user.password !== password) {
+      return res.status(401).json({ error: 'Wrong password' });
+    }
 
-  const token = jwt.sign({ id: user._id }, "allure_secret_key");
+    res.json({ message: 'Login success' });
 
-  res.json({ token });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
+
 module.exports = router;
