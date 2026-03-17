@@ -5,6 +5,9 @@ const mongoose = require('mongoose');
 
 const app = express();
 
+// ✅ ADD THIS LINE
+const PORT = process.env.PORT || 5000;
+
 app.use(cors({
   origin: '*',
   methods: ['GET','POST','PUT','DELETE','PATCH'],
