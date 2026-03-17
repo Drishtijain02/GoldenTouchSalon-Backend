@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const User = require('../models/User');
 
-// REGISTER
 router.post('/register', async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -15,14 +14,18 @@ router.post('/register', async (req, res) => {
       return res.json({ message: 'User already exists' });
     }
 
-    const user = new User({ phone, password });
+    const user = new User({
+      phone: String(phone),
+      password: String(password)
+    });
+
     await user.save();
 
     res.json({ message: 'User created' });
 
   } catch (err) {
-    console.error("REGISTER ERROR:", err); // 🔥 IMPORTANT
-    res.status(500).json({ error: 'Server error' });
+    console.error("REGISTER ERROR:", err); // 👈 IMPORTANT
+    res.status(500).json({ error: err.message });
   }
 });
 
